@@ -14,11 +14,6 @@
   VITE_FOOTER_TEXT = "Optional: extra line shown in the footer"
 
 [[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
