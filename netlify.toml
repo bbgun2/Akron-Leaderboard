@@ -5,7 +5,7 @@
 [template.environment]
   CLOUDINARY_UPLOAD_PRESET = "Name of your unsigned Cloudinary upload preset (defaults to unsigned_upload)"
   VITE_SITE_TITLE = "NRHH Leaderboard"
-  VITE_GROUP_LABEL = "Resident Hall"
+  VITE_GROUP_LABEL = "Residence Hall"
   VITE_EMAIL_DOMAIN = "Optional: your org's email domain, used only for placeholder/hint text"
   VITE_FOOTER_TEXT = "Optional: extra line shown in the footer"
 
