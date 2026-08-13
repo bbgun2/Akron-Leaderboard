@@ -1,6 +1,6 @@
 {
   "appId": "com.example.spiritchallenge",
-  "appName": "Spirit Challenge",
+  "appName": "NRHH Leaderboard",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"
