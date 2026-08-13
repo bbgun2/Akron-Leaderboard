@@ -57,7 +57,7 @@
                 <th class="px-4 py-3">End Date</th> <!-- NEW -->
                 <th class="px-4 py-3">Picture?</th>
                 <th class="px-4 py-3">Reflection?</th>
-                <th class="px-4 py-3">Council-wide?</th>
+                <th class="px-4 py-3">Chapter-wise?</th>
                 <th class="px-4 py-3">Repeatable?</th>
               </tr>
             </thead>
