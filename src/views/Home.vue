@@ -26,6 +26,12 @@
               >
                 {{ i + 1 }}
               </div>
+              <img 
+                v-if="player.fields?.PFP" 
+                :src="player.fields?.PFP" 
+                alt="Profile Picture" 
+                class="w-10 h-10 rounded-full object-cover border-2 border-gray-700 shadow-sm"
+              />
               <div>
                 <p class="text-lg font-bold">{{ player.fields?.Name }}</p>
                 <p class="text-sm italic text-gray-400">
