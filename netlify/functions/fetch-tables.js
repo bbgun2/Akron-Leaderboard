@@ -30,7 +30,14 @@ export const handler = async (event) => {
     // Preserve your existing shape: { id, fields }
     const data = records.map((rec) => ({ id: rec.id, fields: rec.fields }));
 
-    return { statusCode: 200, body: JSON.stringify(data) };
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, max-age=300, s-maxage=600"
+      },
+      body: JSON.stringify(data),
+    };
   } catch (err) {
     console.error("Function Error:", err);
     return { statusCode: err.statusCode || 500, body: JSON.stringify({ error: err.message }) };
