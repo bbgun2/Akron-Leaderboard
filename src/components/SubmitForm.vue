@@ -1,200 +1,153 @@
-<!-- src/components/SubmitForm.vue -->
+<!-- src/views/Challenges.vue -->
 <template>
-  <div class="max-w-2xl p-6 mx-auto bg-gray-800 rounded-lg shadow-lg">
-    <h2 class="mb-6 text-3xl font-extrabold text-white">Submit a Challenge</h2>
+  <div class="min-h-screen p-6 text-gray-100 bg-gray-900">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col items-start justify-between gap-4 mb-8 sm:flex-row sm:items-center">
+        <h1 class="text-3xl font-extrabold">Challenges</h1>
 
-    <form @submit.prevent="handleSubmit" class="space-y-6">
-      <!-- Email -->
-      <div>
-        <label class="block mb-1 text-gray-200">Your Email</label>
-        <div class="relative">
+        <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
           <input
-            v-model.trim="form.email"
-            type="email"
-            required
-            :placeholder="emailPlaceholder"
-            class="w-full p-3 pr-12 text-white placeholder-gray-400 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @blur="loadMemberSubmissions"
-            :disabled="loadingMember || submitting"
+            v-model.trim="q"
+            type="search"
+            placeholder="Search challenges…"
+            class="w-full sm:w-72 p-2.5 rounded-md bg-gray-800 border border-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            :disabled="loading"
           />
-          <div
-            v-if="loadingMember"
-            class="absolute inset-y-0 flex items-center right-3"
-            aria-live="polite"
+          <select
+            v-model="sortKey"
+            class="p-2.5 rounded-md bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            :disabled="loading"
           >
-            <svg class="w-5 h-5 text-blue-400 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-            </svg>
-          </div>
-        </div>
-        <p v-if="emailChecked && !validMember" class="mt-1 text-sm text-red-300">
-          Please enter a valid, known email address.
-        </p>
-      </div>
-
-      <!-- Greeting -->
-      <p v-if="emailChecked && validMember && memberName"
-         class="mt-2 text-lg font-semibold text-blue-300">
-        Hello, {{ memberName }}. Ready to submit some challenges?
-      </p>
-
-      <!-- Challenge dropdown OR empty-state -->
-      <div v-if="showDropdown">
-        <div class="flex items-center gap-2 mb-1">
-          <label class="block text-gray-200">Select Challenge</label>
-          <svg
-            v-if="loadingChallenges"
-            class="w-4 h-4 text-blue-400 animate-spin"
-            viewBox="0 0 24 24" fill="none" aria-hidden="true"
-          >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-            <path class="opacity-75" fill="currentColor" d="M4 12a 8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-          </svg>
-        </div>
-        <select
-          v-model="form.challengeId"
-          required
-          @change="onChallengeChange"
-          class="w-full p-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          :disabled="loadingChallenges || submitting"
-        >
-          <option value="">-- Select a Challenge --</option>
-          <option v-for="c in filteredChallenges" :key="c.id" :value="c.id">
-            {{ c['Challenge Name'] || 'Unnamed Challenge' }}<span v-if="isTeamChallenge(c)"> (Team)</span>
-          </option>
-        </select>
-      </div>
-      <p v-else-if="emailChecked && validMember" class="text-sm text-gray-300">
-        You’ve completed all available challenges. Check back later for new ones!
-      </p>
-
-      <!-- Selected challenge Description -->
-      <div
-        v-if="currentChallenge && currentChallenge.Description"
-        class="p-4 text-sm border border-gray-600 rounded-lg bg-gray-700/60"
-      >
-        <div class="mb-1 font-semibold text-gray-300">Description</div>
-        <p class="text-gray-200 whitespace-pre-wrap">
-          {{ currentChallenge.Description }}
-        </p>
-      </div>
-
-      <!-- Notes / Reflection -->
-      <div v-if="currentChallenge && currentChallenge['Reflection Required?'] === 'Yes'">
-        <label class="block mb-1 text-gray-200">Notes / Reflection</label>
-        <textarea
-          v-model="form.notes"
-          placeholder="Write your reflection or any notes..."
-          class="w-full p-3 text-white placeholder-gray-400 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          rows="4"
-        ></textarea>
-
-        <!-- NEW: Ask if they want to share reflection -->
-        <div class="flex items-center mt-2 space-x-2">
-          <input
-            id="share-reflection"
-            type="checkbox"
-            v-model="form.shareReflection"
-            class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
-          />
-          <label for="share-reflection" class="text-sm text-gray-300">
-            Share my reflection on the public board
-          </label>
+            <option value="pointsDesc">Sort: Points (high → low)</option>
+            <option value="pointsAsc">Sort: Points (low → high)</option>
+            <option value="nameAsc">Sort: Name (A → Z)</option>
+            <option value="nameDesc">Sort: Name (Z → A)</option>
+          </select>
         </div>
       </div>
 
-      <!-- Proof Upload -->
-      <div v-if="currentChallenge && currentChallenge['Picture Required?'] === 'Yes'">
-        <label class="block mb-2 text-gray-200">Upload Proof (Image)</label>
-        <label
-          for="file-upload"
-          class="inline-flex items-center px-4 py-2 font-semibold text-white bg-blue-600 rounded-md cursor-pointer hover:bg-blue-700"
-        >
-          Choose File
-        </label>
-        <input
-          id="file-upload"
-          type="file"
-          accept="image/*"
-          class="hidden"
-          @change="handleFileChange"
-          :disabled="submitting"
-        />
-        <span v-if="form.file" class="ml-3 text-gray-300 truncate">{{ form.file.name }}</span>
-      </div>
-
-      <!-- Submit -->
-      <button
-        type="submit"
-        class="inline-flex items-center gap-2 px-5 py-2.5 font-bold text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-60"
-        :disabled="submitting || disableSubmit"
-      >
-        <svg
-          v-if="submitting"
-          class="w-5 h-5 text-white animate-spin"
-          viewBox="0 0 24 24" fill="none" aria-hidden="true"
-        >
+      <!-- Loading -->
+      <div v-if="loading" class="flex items-center gap-3 text-gray-300">
+        <svg class="w-5 h-5 text-blue-400 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
         </svg>
-        <span>{{ submitting ? 'Submitting…' : 'Submit Challenge' }}</span>
-      </button>
+        Loading challenges…
+      </div>
 
-      <!-- Status / Error -->
-      <p v-if="status" class="text-green-400">{{ status }}</p>
-      <p v-if="error" class="text-red-400">{{ error }}</p>
-    </form>
+      <!-- Error -->
+      <div v-if="error && !loading" class="p-4 mt-4 text-red-300 border border-red-700 rounded-lg bg-red-900/30">
+        {{ error }}
+      </div>
 
-    <!-- Success Modal -->
-    <transition name="fade">
-      <div
-        v-if="showSuccessModal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
-        @keyup.esc="closeSuccessModal"
-        tabindex="0"
-        role="dialog"
-        aria-modal="true"
-      >
-        <div class="absolute inset-0 bg-black/60" @click="closeSuccessModal" />
-        <div class="relative z-10 w-full max-w-md p-6 bg-gray-800 shadow-2xl rounded-2xl ring-1 ring-white/10">
-          <div class="flex items-start justify-between">
-            <div>
-              <h3 class="text-2xl font-bold text-white">Success!</h3>
-              <p class="mt-1 text-gray-300">An admin will review your submission.</p>
-            </div>
-            <button
-              type="button"
-              class="p-2 -mr-2 text-gray-300 rounded-md hover:bg-gray-700/60 hover:text-white"
-              @click="closeSuccessModal"
-              aria-label="Close"
-            >
-              <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
+      <!-- Empty -->
+      <div v-if="!loading && !error && filtered.length === 0" class="p-4 mt-6 text-gray-300 border border-gray-700 rounded-lg bg-gray-800/60">
+        No challenges found.
+      </div>
+
+      <!-- Table (desktop) -->
+      <div v-if="!loading && !error && filtered.length > 0" class="hidden md:block">
+        <div class="overflow-hidden bg-gray-800 border border-gray-700 rounded-xl">
+          <table class="w-full text-left">
+            <thead class="text-sm text-gray-300 bg-gray-800/80">
+              <tr>
+                <th class="px-4 py-3">Name</th>
+                <th class="px-4 py-3">Description</th>
+                <th class="px-4 py-3">Points</th>
+                <th class="px-4 py-3">End Date</th> <!-- NEW -->
+                <th class="px-4 py-3">Picture?</th>
+                <th class="px-4 py-3">Reflection?</th>
+                <th class="px-4 py-3">Council-wide?</th>
+                <th class="px-4 py-3">Repeatable?</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700">
+              <tr v-for="c in filtered" :key="c.id" class="hover:bg-gray-700/40">
+                <td class="px-4 py-3 font-semibold text-gray-100">
+                  {{ c['Challenge Name'] || 'Unnamed Challenge' }}
+                </td>
+                <td class="px-4 py-3 text-gray-200 whitespace-pre-wrap">
+                  {{ c.Description || '—' }}
+                </td>
+                <td class="px-4 py-3 text-blue-300">
+                  {{ pointsValue(c) }}
+                </td>
+                <td class="px-4 py-3 text-gray-300"> <!-- NEW -->
+                  {{ endDateDisplay(c) }}
+                </td>
+                <td class="px-4 py-3">
+                  <span :class="badgeClass(c['Picture Required?'])" class="inline-flex items-center px-2 py-0.5 rounded border text-xs">
+                    {{ yesNo(c['Picture Required?']) }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span :class="badgeClass(c['Reflection Required?'])" class="inline-flex items-center px-2 py-0.5 rounded border text-xs">
+                    {{ yesNo(c['Reflection Required?']) }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span :class="badgeClass(c['Team?'])" class="inline-flex items-center px-2 py-0.5 rounded border text-xs">
+                    {{ yesNo(c['Team?']) }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span :class="badgeClass(c['Repeatable?'])" class="inline-flex items-center px-2 py-0.5 rounded border text-xs">
+                    {{ yesNo(c['Repeatable?']) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cards (mobile) -->
+      <div v-if="!loading && !error && filtered.length > 0" class="grid gap-4 md:hidden">
+        <div v-for="c in filtered" :key="c.id" class="p-4 bg-gray-800 border border-gray-700 rounded-xl">
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="text-lg font-bold text-gray-100">
+              {{ c['Challenge Name'] || 'Unnamed Challenge' }}
+            </h2>
+            <span class="px-2 py-0.5 text-sm rounded bg-gray-700 border border-gray-600 text-blue-300">
+              {{ pointsValue(c) }} pts
+            </span>
           </div>
-          <div class="mt-6">
-            <button
-              type="button"
-              class="inline-flex items-center justify-center w-full px-4 py-2 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              @click="closeSuccessModal"
-            >
-              Close
-            </button>
+          <p class="mt-1 text-sm text-gray-400"> <!-- NEW -->
+            Due: <span class="text-gray-200">{{ endDateDisplay(c) }}</span>
+          </p>
+          <p class="mt-2 text-gray-200 whitespace-pre-wrap">
+            {{ c.Description || '—' }}
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-4 text-sm">
+            <div :class="cardTagClass(c['Picture Required?'])" class="flex items-center justify-between px-2 py-1 border rounded">
+              <span class="font-medium">Picture</span>
+              <span class="text-xs">{{ yesNo(c['Picture Required?']) }}</span>
+            </div>
+            <div :class="cardTagClass(c['Reflection Required?'])" class="flex items-center justify-between px-2 py-1 border rounded">
+              <span class="font-medium">Reflection</span>
+              <span class="text-xs">{{ yesNo(c['Reflection Required?']) }}</span>
+            </div>
+            <div :class="cardTagClass(c['Team?'])" class="flex items-center justify-between px-2 py-1 border rounded">
+              <span class="font-medium">Team</span>
+              <span class="text-xs">{{ yesNo(c['Team?']) }}</span>
+            </div>
+            <div :class="cardTagClass(c['Repeatable?'])" class="flex items-center justify-between px-2 py-1 border rounded">
+              <span class="font-medium">Repeatable</span>
+              <span class="text-xs">{{ yesNo(c['Repeatable?']) }}</span>
+            </div>
           </div>
         </div>
       </div>
-    </transition>
+
+    </div>
   </div>
 </template>
 
 <script>
-import { getData, lookupMember } from "../api/data";
-import { config } from "../config";
+import { getData } from "../api/data";
 
-const DEBUG = false;
-
+// Normalize CSV/Airtable shapes: "Yes"/"No", true/false, 1/0, arrays, etc.
 function toBool(v) {
   if (Array.isArray(v)) v = v[0];
   if (v == null) return false;
@@ -205,301 +158,147 @@ function toBool(v) {
 }
 
 export default {
+  name: "ChallengesView",
+
   data() {
     return {
-      rawChallenges: [],
-      memberSubmissions: [],
-      teamSubmissions: [],
-      memberTeamNames: [],
-      validMember: false,
-      emailChecked: false,
-      memberName: "",
-
-      loadingMember: false,
-      loadingChallenges: false,
-
-      showSuccessModal: false,
-
-      form: {
-        email: "",
-        challengeId: "",
-        notes: "",
-        file: null,
-        fileDataUrl: "",
-        shareReflection: false,
-      },
-      currentChallenge: null,
-      submitting: false,
-      status: "",
+      raw: [],
+      loading: false,
       error: "",
+      q: "",
+      sortKey: "pointsDesc",
     };
   },
 
   computed: {
-    emailPlaceholder() {
-      return config.emailDomain ? `you@${config.emailDomain}` : "you@example.org";
-    },
-    emailDomainHint() {
-      return config.emailDomain ? ` Use your ${config.emailDomain} email.` : "";
-    },
-    normalizedChallenges() {
-      if (!Array.isArray(this.rawChallenges)) return [];
-      return this.rawChallenges.map((r) => (r?.fields ? { id: r.id, ...r.fields } : r));
+    challenges() {
+      if (!Array.isArray(this.raw)) return [];
+      return this.raw.map((r) => (r?.fields ? { id: r.id, ...r.fields } : r));
     },
 
-    activeChallenges() {
-      return this.normalizedChallenges.filter((c) => this.isActive(c));
-    },
+    filtered() {
+      const needle = this.q.toLowerCase();
 
-    selectedChallenge() {
-      return this.activeChallenges.find((c) => c.id === this.form.challengeId);
-    },
+      let list = this.challenges.filter((c) => {
+        // Accept a variety of possible field spellings for active flag
+        const rawActive =
+          c["Is Active"] ?? c.IsActive ?? c["IsActive"] ?? c["Active"];
+        const isActive = toBool(rawActive);
 
-    disableSubmit() {
-      const c = this.selectedChallenge;
-      if (!c) return true;
-      if (c["Reflection Required?"] === "Yes" && !this.form.notes.trim()) return true;
-      if (c["Picture Required?"] === "Yes" && !this.form.file) return true;
-      return false;
-    },
+        if (!isActive) return false;
 
-    filteredChallenges() {
-      if (!this.emailChecked || !this.validMember) return [];
+        const name = String(c["Challenge Name"] || "").toLowerCase();
+        const desc = String(c.Description || "").toLowerCase();
+        return !needle || name.includes(needle) || desc.includes(needle);
+      });
 
-      // If fetches failed and came back empty, do NOT auto-show everything.
-      // Only show all when the member truly has zero submissions *and* we successfully looked them up.
-      // We assume lookup success when emailChecked && validMember are true.
-      const hasAnySubs = this.memberSubmissions.length > 0 || this.teamSubmissions.length > 0;
+      const getPts = (c) => {
+        const v = c.Points;
+        return Array.isArray(v) ? Number(v[0]) || 0 : Number(v) || 0;
+      };
 
-      const completedByMember = new Set();
-      this.memberSubmissions.forEach((s) => this.extractChallengeIds(s).forEach((id) => completedByMember.add(id)));
-
-      const completedByTeam = new Set();
-      this.teamSubmissions.forEach((s) => this.extractChallengeIds(s).forEach((id) => completedByTeam.add(id)));
-
-      if (DEBUG) {
-        console.log("[DBG] hasAnySubs:", hasAnySubs);
-        console.log("[DBG] memberSubmissions:", this.memberSubmissions);
-        console.log("[DBG] teamSubmissions:", this.teamSubmissions);
-        console.log("[DBG] completedByMember:", Array.from(completedByMember));
-        console.log("[DBG] completedByTeam:", Array.from(completedByTeam));
+      if (this.sortKey === "pointsDesc") {
+        list = list.sort(
+          (a, b) =>
+            getPts(b) - getPts(a) ||
+            String(a["Challenge Name"] || "").localeCompare(String(b["Challenge Name"] || ""))
+        );
+      } else if (this.sortKey === "pointsAsc") {
+        list = list.sort(
+          (a, b) =>
+            getPts(a) - getPts(b) ||
+            String(a["Challenge Name"] || "").localeCompare(String(b["Challenge Name"] || ""))
+        );
+      } else if (this.sortKey === "nameAsc") {
+        list = list.sort((a, b) =>
+          String(a["Challenge Name"] || "").localeCompare(String(b["Challenge Name"] || ""))
+        );
+      } else if (this.sortKey === "nameDesc") {
+        list = list.sort((a, b) =>
+          String(b["Challenge Name"] || "").localeCompare(String(a["Challenge Name"] || ""))
+        );
       }
 
-      return this.activeChallenges.filter((c) => {
-        const repeatable = toBool(c["Repeatable?"]);
-        const isTeam = this.isTeamChallenge(c);
-        const done = isTeam ? completedByTeam.has(c.id) : completedByMember.has(c.id);
-        return !done || repeatable;
-      });
-    },
-
-    showDropdown() {
-      return this.emailChecked && this.validMember && this.filteredChallenges.length > 0;
-    },
-  },
-
-  watch: {
-    "form.email"() {
-      this.emailChecked = false;
-      this.validMember = false;
-      this.memberSubmissions = [];
-      this.teamSubmissions = [];
-      this.memberTeamNames = [];
-      this.form.challengeId = "";
-      this.currentChallenge = null;
-      this.status = "";
-      this.error = "";
+      return list;
     },
   },
 
   methods: {
-    isActive(challenge) {
-      const raw = challenge?.["Is Active"];
-      return toBool(raw);
+    yesNo(v) {
+      return toBool(v) ? "Yes" : "No";
+    },
+    badgeClass(v) {
+      return toBool(v)
+        ? "bg-emerald-900/40 text-emerald-300 border-emerald-700"
+        : "bg-gray-700/40 text-gray-300 border-gray-600";
+    },
+    cardTagClass(v) {
+      return toBool(v)
+        ? "bg-emerald-900/30 border-emerald-700 text-emerald-300"
+        : "bg-gray-700/30 border-gray-600 text-gray-300";
+    },
+    pointsValue(c) {
+      const v = c.Points;
+      if (Array.isArray(v)) return Number(v[0]) || 0;
+      return Number(v) || 0;
     },
 
-    isTeamChallenge(challenge) {
-      const v = challenge?.["Team?"];
-      return toBool(v);
+    // --- NEW: End Date helpers ---
+    endDateRaw(c) {
+      // Prefer "End Date", but be resilient to alternative field spellings
+      return c["End Date"] ?? c.EndDate ?? c["EndDate"] ?? null;
     },
-
-    extractChallengeIds(submission) {
-      const f = submission?.fields || {};
-      const raw = f.Challenge;
-      if (Array.isArray(raw)) return raw.filter((id) => typeof id === "string");
-      if (typeof raw === "string") return [raw];
-      return [];
+    endDateDisplay(c) {
+      const raw = this.endDateRaw(c);
+      if (!raw) return "—";
+      // Airtable may send ISO strings or user-entered strings; format both nicely
+      const d = this.parseDateLoose(raw);
+      return d ? this.formatDate(d) : String(raw);
     },
-
-    async loadChallenges() {
+    parseDateLoose(v) {
+      // v may be ISO, or something like "9/24/2025 1:44pm"
       try {
-        this.loadingChallenges = true;
-        // Inactive challenges are filtered out by activeChallenges
+        // If array, use first
+        if (Array.isArray(v)) v = v[0];
+        if (typeof v === "number") return new Date(v);
+        const d = new Date(String(v));
+        if (!isNaN(d.getTime())) return d;
+      } catch (_) {}
+      return null;
+    },
+    formatDate(d) {
+      // Friendly format: Sep 24, 2025, 1:44 PM
+      try {
+        return d.toLocaleString([], {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
+      } catch {
+        return d.toString();
+      }
+    },
+    // --- /End Date helpers ---
+
+    async load() {
+      this.loading = true;
+      this.error = "";
+      try {
         const { challenges } = await getData();
-        this.rawChallenges = Array.isArray(challenges) ? challenges : [];
-      } catch (err) {
-        console.error("Error fetching challenges:", err);
+        this.raw = Array.isArray(challenges) ? challenges : [];
+      } catch (e) {
+        console.error(e);
         this.error = "Could not load challenges.";
       } finally {
-        this.loadingChallenges = false;
-      }
-    },
-
-    async loadMemberSubmissions() {
-      this.loadingMember = true;
-      this.emailChecked = false;
-      this.validMember = false;
-      this.memberName = "";
-      this.memberSubmissions = [];
-      this.teamSubmissions = [];
-      this.memberTeamNames = [];
-
-      const raw = (this.form.email || "").trim();
-      if (!raw) {
-        this.loadingMember = false;
-        return;
-      }
-
-      const email = raw.toLowerCase();
-      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      if (!isEmail) {
-        this.emailChecked = true;
-        this.validMember = false;
-        this.error = "Please enter a valid email address.";
-        this.loadingMember = false;
-        return;
-      }
-
-      try {
-        // Member lookup (case-insensitive) plus the challenges they and their
-        // team have already submitted, all from the server-side cache
-        const res = await lookupMember(email);
-
-        if (!res.found) {
-          this.emailChecked = true;
-          this.validMember = false;
-          return;
-        }
-
-        this.memberName = res.name;
-        this.validMember = true;
-        this.memberSubmissions = res.memberSubmissions;
-        this.teamSubmissions = res.teamSubmissions;
-        this.memberTeamNames = res.teamNames;
-
-        this.emailChecked = true;
-      } catch (err) {
-        console.error("Error fetching submissions:", err);
-        this.memberSubmissions = [];
-        this.teamSubmissions = [];
-        this.memberTeamNames = [];
-        this.emailChecked = true;
-        this.validMember = false;
-        this.error = "Something went wrong validating your email. Please try again.";
-      } finally {
-        this.loadingMember = false;
-      }
-    },
-
-    onChallengeChange() {
-      this.currentChallenge = this.selectedChallenge || null;
-      if (!this.currentChallenge || this.currentChallenge["Reflection Required?"] !== "Yes") {
-        this.form.notes = "";
-      }
-      if (!this.currentChallenge || this.currentChallenge["Picture Required?"] !== "Yes") {
-        this.form.file = null;
-        this.form.fileDataUrl = "";
-      }
-    },
-
-    handleFileChange(e) {
-      const f = e.target.files?.[0] || null;
-      this.form.file = f;
-      this.form.fileDataUrl = "";
-      if (!f) return;
-      const reader = new FileReader();
-      reader.onload = () => { this.form.fileDataUrl = reader.result; };
-      reader.readAsDataURL(f);
-    },
-
-    closeSuccessModal() {
-      this.showSuccessModal = false;
-    },
-
-    async handleSubmit() {
-      try {
-        this.status = "";
-        this.error = "";
-        this.submitting = true;
-
-        let proofUrl = "";
-
-        if (this.form.fileDataUrl) {
-          const uploadRes = await fetch("/.netlify/functions/upload-proof", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              file: this.form.fileDataUrl,
-              member: this.form.email,
-              challenge: this.form.challengeId,
-            }),
-          });
-
-          const uploadJson = await uploadRes.json();
-          if (!uploadRes.ok || !uploadJson.url) {
-            throw new Error(uploadJson.error || "Proof upload failed");
-          }
-          proofUrl = uploadJson.url;
-        }
-
-        const res = await fetch("/.netlify/functions/submit-task", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: this.form.email,
-            challengeId: this.form.challengeId,
-            notes: this.form.notes,
-            proofUrl,
-            shareReflection: this.form.shareReflection ? "Yes" : "No",
-          }),
-        });
-
-        const json = await res.json();
-
-        if (!res.ok) {
-          if (res.status === 404 && json?.error?.toLowerCase().includes("member not found")) {
-            throw new Error(`Your email doesn't match our records.${this.emailDomainHint}`);
-          }
-          throw new Error(json.error || "Submission failed");
-        }
-
-        this.showSuccessModal = true;
-        this.status = "Challenge submitted successfully! Pending approval.";
-
-        // Reset form + state
-        this.form = { email: "", challengeId: "", notes: "", file: null, fileDataUrl: "" };
-        this.currentChallenge = null;
-        this.memberSubmissions = [];
-        this.teamSubmissions = [];
-        this.memberTeamNames = [];
-        this.emailChecked = false;
-        this.validMember = false;
-      } catch (err) {
-        console.error("Submit error:", err);
-        this.error = err.message || "Error submitting challenge. Contact an admin if the issue persists.";
-      } finally {
-        this.submitting = false;
+        this.loading = false;
       }
     },
   },
 
   mounted() {
-    this.loadChallenges();
+    this.load();
   },
 };
 </script>
-
-<style>
-.fade-enter-active, .fade-leave-active { transition: opacity .15s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-</style>
