@@ -57,7 +57,7 @@
                 <th class="px-4 py-3">End Date</th> <!-- NEW -->
                 <th class="px-4 py-3">Picture?</th>
                 <th class="px-4 py-3">Reflection?</th>
-                <th class="px-4 py-3">Chapter-wise?</th>
+                <th class="px-4 py-3">Council-wide?</th>
                 <th class="px-4 py-3">Repeatable?</th>
               </tr>
             </thead>
@@ -145,7 +145,7 @@
 </template>
 
 <script>
-import { fetchTable } from "../api/fetchTables";
+import { getData } from "../api/data";
 
 // Normalize CSV/Airtable shapes: "Yes"/"No", true/false, 1/0, arrays, etc.
 function toBool(v) {
@@ -286,8 +286,8 @@ export default {
       this.loading = true;
       this.error = "";
       try {
-        const records = await fetchTable("Challenges");
-        this.raw = Array.isArray(records) ? records : [];
+        const { challenges } = await getData();
+        this.raw = Array.isArray(challenges) ? challenges : [];
       } catch (e) {
         console.error(e);
         this.error = "Could not load challenges.";
